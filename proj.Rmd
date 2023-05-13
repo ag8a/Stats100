@@ -8,25 +8,6 @@ date: "2023-05-13"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 
 ```{r}
 data = read.csv('2022.csv')
@@ -34,13 +15,15 @@ data$Goals = as.double(data$Goals)
 data$Assists = as.double(data$Assists)
 data$Sh.90 = as.double(data$Sh.90)
 data$G.Sh = as.double(data$G.Sh)
-model1 = lm(data = data, Votes ~ Goals + Assists + Sh.90 + G.Sh-1)
-model2 = lm(data = data, Votes ~ Tackle + Blocks + Interceptions + Clearances-1)
-model3 = lm(data = data, Votes ~ Touches + Def.3rd + Mid.3rd + Att.3rd-1)
-model1
+data$atttouch = data$Att.3rd/data$Touches
+data$VotePer = data$Vote / sum(data$Votes)
+model1 = lm(data = data, VotePer ~ log(sqrt(Goals)) + Assists + Sh.90 + G.Sh-1+Trophies)
+model2 = lm(data = data, VotePer ~ Tackle + Blocks + Interceptions + Clearances-1)
+model3 = lm(data = data, VotePer ~ log(Touches) + log(Def.3rd) + log(Mid.3rd) + atttouch -1)
+summary(model1)
 model2
 model3
-plot(model3)
+plot(model2)
 ```
 
 
@@ -48,9 +31,9 @@ plot(model3)
 ```{r}
 ?predict
 new <- tibble(Goals=c(20.0), Assists=c(12.0), Sh.90=c(2.3), G.Sh=c(0.1))
-tibs = data.frame(data[9,]) %>%
-  select(Goals, Assists, Sh.90, G.Sh)
-prediction = predict(object = model1, newdata = tibs)
+tibs = data.frame(data[4,]) %>%
+  select(Touches, Def.3rd, Mid.3rd, atttouch)
+prediction = predict(object = model3, newdata = tibs)
 prediction
 ```
 
