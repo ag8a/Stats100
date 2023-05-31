@@ -1,44 +1,157 @@
 ---
 title: "Project"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 date: "2023-05-13"
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+```
+##HonestWork
+```{r}
+D20212022 = read.csv('2022.csv')
+D20212022$VotePer = D20212022$Votes / sum(D20212022$Votes)
+D20212022$TotGoal = D20212022$Goals + D20212022$Assists
+D20212022$TotGoalPerGame = D20212022$TotGoal / D20212022$Games.Played
+D20212022$TotGoalPerMinute = D20212022$TotGoal / D20212022$Minutes.Played 
+D20212022$Goal90 = D20212022$Goals / D20212022$Minutes.Played / 90
+
+D20202021 = read.csv('2021.csv')
+D20202021$VotePer = D20202021$Votes / sum(D20202021$Votes)
+D20202021$TotGoal = D20202021$Goals + D20202021$Assists
+D20202021$TotGoalPerGame = D20202021$TotGoal / D20202021$Games.Played
+D20202021$TotGoalPerMinute = D20202021$TotGoal / D20202021$Minutes.Played
+D20202021$Goal90 = D20202021$Goals / D20202021$Minutes.Played / 90
+
+D20182019 = read.csv('2019.csv')
+D20182019$VotePer = D20182019$Votes / sum(D20182019$Votes)
+D20182019$TotGoal = D20182019$Goals + D20182019$Assists
+D20182019$TotGoalPerGame = D20182019$TotGoal / D20182019$Games.Played
+D20182019$TotGoalPerMinute = D20182019$TotGoal / D20182019$Minutes.Played
+D20182019$Goal90 = D20182019$Goals / D20182019$Minutes.Played / 90
+
+D20172018 = read.csv('2018.csv')
+D20172018$VotePer = D20172018$Votes / sum(D20172018$Votes)
+D20172018$TotGoal = D20172018$Goals + D20172018$Assists
+D20172018$TotGoalPerGame = D20172018$TotGoal / D20172018$Games.Played
+D20172018$TotGoalPerMinute = D20172018$TotGoal / D20172018$Minutes.Played
+D20172018$Goal90 = D20172018$Goals / D20172018$Minutes.Played / 90
+
+D2023 = read.csv('2023.csv')
+allData = rbind(D20212022, D20202021)
+allData = rbind(allData, D20182019)
+allData = rbind(allData, D20172018)
+allData$TouchesPerMinute = (allData$Touches / allData$Minutes.Played)
+allData$MinutesPerGame = allData$Minutes.Played / allData$Games.Played
+```
+
+##Ratings
+```{r}
+
+allData$OffensiveRating = ((allData$TotGoalPerMinute - mean(allData$TotGoalPerMinute)) / (sd(allData$TotGoalPerMinute)/(101)^(1/2)))
+
+
+
+
+allData$DefensiveRating = ((4/7)*(allData$Tackle + allData$Interceptions) / allData$Games.Played) + ((2/7)*allData$Blocks/allData$Games.Played) + ((1/7)*allData$Clearances/allData$Games.Played)
+allData$DefensiveRating = ((allData$DefensiveRating - mean(allData$DefensiveRating)) / (sd(allData$DefensiveRating)/(101)^(1/2)))
+```
+
+```{r}
+D2023$VotePer = D2023$Votes
+D2023$MinutesPerGame = D2023$Minutes.Played / D2023$Games.Played
+D2023$TouchesPerMinute = (D2023$Touches / D2023$Minutes.Played)
+D2023$TotGoal = D2023$Goals + D2023$Assists
+D2023$TotGoalPerMinute = D2023$TotGoal / D2023$Minutes.Played 
+D2023$OffensiveRating = ((D2023$TotGoalPerMinute - mean(D2023$TotGoalPerMinute)) / (sd(D2023$TotGoalPerMinute)/(101)^(1/2)))
+D2023$DefensiveRating = ((4/7)*(D2023$Tackle + D2023$Interceptions) / D2023$Games.Played) + ((2/7)*D2023$Blocks/D2023$Games.Played) + ((1/7)*D2023$Clearances/D2023$Games.Played)
+D2023$DefensiveRating = ((D2023$DefensiveRating - mean(D2023$DefensiveRating)) / (sd(D2023$DefensiveRating)/(101)^(1/2)))
 ```
 
 
 ```{r}
-data = read.csv('2022.csv')
-data$Goals = as.double(data$Goals)
-data$Assists = as.double(data$Assists)
-data$Sh.90 = as.double(data$Sh.90)
-data$G.Sh = as.double(data$G.Sh)
-data$atttouch = data$Att.3rd/data$Touches
-data$VotePer = data$Vote / sum(data$Votes)
-model1 = lm(data = data, VotePer ~ log(sqrt(Goals)) + Assists + Sh.90 + G.Sh-1+Trophies)
-model2 = lm(data = data, VotePer ~ Tackle + Blocks + Interceptions + Clearances-1)
-model3 = lm(data = data, VotePer ~ log(Touches) + log(Def.3rd) + log(Mid.3rd) + atttouch -1)
+vec = c()
+for (i in 1: nrow(allData)){
+  if(allData[i, 2] == 1){
+    vec = append(vec,'A Winner',after= length(vec))
+  }
+  else{
+    vec = append(vec, 'Not a Winner',after = length(vec))
+  }
+}
+allData$Winners = vec
+3/13
+```
+
+```{r}
+ggplot(data = allData, mapping = aes(x =  OffensiveRating, y = VotePer))+
+  geom_point()+
+  geom_point(aes(color = Winners))+
+  labs(x='Offensive Rating', y='Vote Percentage', title = 'Vote Percentage vs Offensive Rating')+
+  theme(plot.title = element_text(size = rel(1.5), face = "bold", hjust = 0.5),
+axis.title = element_text(size = rel(1.5)),
+legend.position = "bottom")
+```
+```{r}
+ggplot(data = allData, mapping = aes(x =  DefensiveRating, y = VotePer))+
+  geom_point()+
+  geom_point(aes(color = Winners))+
+  labs(x='Defensive Rating', y='Vote Percentage', title = 'Vote Percentage vs Defensive Rating')+
+  theme(plot.title = element_text(size = rel(1.5), face = "bold", hjust = 0.5),
+axis.title = element_text(size = rel(1.5)),
+legend.position = "bottom")
+```
+
+
+
+```{r}
+ggplot(data = allData, mapping = aes(x = TouchesPerMinute, y = VotePer))+
+  geom_point()+
+  geom_point(aes(color = Winners))+
+  labs(x='Touches Per Minute', y='Vote Percentage', title = 'Vote Percentage vs Touches Per Minute')+
+  theme(plot.title = element_text(size = rel(1.5), face = "bold", hjust = 0.5),
+axis.title = element_text(size = rel(1.5)),
+legend.position = "bottom")
+```
+```{r}
+ggplot(data = allData, mapping = aes(x = MinutesPerGame, y = VotePer))+
+  geom_point()+
+  geom_point(aes(color = Winners))+
+  labs(x='Minutes Per Game', y='Vote Percentage', title = 'Vote Percentage vs Minutes Per Game')+
+  theme(plot.title = element_text(size = rel(1.5), face = "bold", hjust = 0.5),
+axis.title = element_text(size = rel(1.5)),
+legend.position = "bottom")
+```
+
+```{r}
+ggplot(data = allData, mapping = aes(x = Position))+
+  geom_bar(aes(fill = Winners))+
+  labs(x='Position', title = 'Nominees by Position')+
+  theme(plot.title = element_text(size = rel(1.5), face = "bold", hjust = 0.5),
+axis.title = element_text(size = rel(1.5)),
+legend.position = "bottom")
+```
+
+```{r}
+model1 = lm(data = allData, VotePer ~ OffensiveRating -1)
 summary(model1)
-model2
-model3
-plot(model2)
+model2 = lm(data = allData, VotePer ~ DefensiveRating -1)
+summary(model2)
+model3 = lm(data = allData, VotePer ~ DefensiveRating + OffensiveRating -1)
+summary(model3)
+model4 = lm(data = allData, VotePer ~ DefensiveRating + TouchesPerMinute + OffensiveRating + MinutesPerGame -1)
+summary(model4)
+D2023dos = D2023
+D2023dos$VotePer = predict(model4, D2023dos)
+D2023$VotePer = predict(model3, D2023)
+plot(model4)
 ```
-
-
-
 ```{r}
-?predict
-new <- tibble(Goals=c(20.0), Assists=c(12.0), Sh.90=c(2.3), G.Sh=c(0.1))
-tibs = data.frame(data[4,]) %>%
-  select(Touches, Def.3rd, Mid.3rd, atttouch)
-prediction = predict(object = model3, newdata = tibs)
-prediction
+D2023tres = D2023
+D2023tres$VotePer = ((6/13)*D2023tres$OffensiveRating + (4/13)*D2023tres$DefensiveRating + (2/13)*D2023tres$MinutesPerGame + (1/13)*D2023tres$TouchesPerMinute)
 ```
-
-
-
-
-
 
